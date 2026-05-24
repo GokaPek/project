@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/courses")
@@ -31,22 +32,35 @@ public class CourseController {
     }
 
     @PostMapping("/{id}/enroll")
-    public String enroll(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        var user = (User) userService.loadUserByUsername(userDetails.getUsername());
-        var course = courseService.findById(id);
-        enrollmentService.enroll(user, course);
+    public String enroll(@PathVariable Long id,
+                         @AuthenticationPrincipal UserDetails userDetails,
+                         RedirectAttributes ra) {
+        try {
+            var user = (User) userService.loadUserByUsername(userDetails.getUsername());
+            var course = courseService.findById(id);
+            enrollmentService.enroll(user, course);
+            ra.addFlashAttribute("success", "Enrolled to " + course.getTitle());
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/courses";
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        var user = (    User) userService.loadUserByUsername(userDetails.getUsername());
-        var course = courseService.findById(id);
-        enrollmentService.cancelEnrollment(user, course);
+    public String cancel(@PathVariable Long id,
+                         @AuthenticationPrincipal UserDetails userDetails,
+                         RedirectAttributes ra) {
+        try {
+            var user = (User) userService.loadUserByUsername(userDetails.getUsername());
+            var course = courseService.findById(id);
+            enrollmentService.cancelEnrollment(user, course);
+            ra.addFlashAttribute("success", "Canceled enrollment for " + course.getTitle());
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/courses";
     }
 
-    // Admin endpoints
     @GetMapping("/admin/new")
     public String createForm(Model model) {
         model.addAttribute("course", new Course());
@@ -54,8 +68,13 @@ public class CourseController {
     }
 
     @PostMapping("/admin/save")
-    public String save(@ModelAttribute Course course) {
-        courseService.save(course);
+    public String save(@ModelAttribute Course course, RedirectAttributes ra) {
+        try {
+            courseService.save(course);
+            ra.addFlashAttribute("success", "Course created: " + course.getTitle());
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Failed to create course: " + e.getMessage());
+        }
         return "redirect:/courses";
     }
 }

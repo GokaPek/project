@@ -7,6 +7,7 @@
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div th:replace="~{fragments/alerts :: alerts}"></div>
     <div class="container">
         <a class="navbar-brand" href="/">Course Manager</a>
         <div class="collapse navbar-collapse">
@@ -31,5 +32,6 @@
     <div th:replace="~{fragments/alerts :: alerts}"></div>
     <div th:insert="~{${page}} :: content">Content</div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
