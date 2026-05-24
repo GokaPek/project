@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 public class CourseEnrollmentService {
@@ -34,5 +36,9 @@ public class CourseEnrollmentService {
 
     public boolean isEnrolled(User user, Course course) {
         return user.getCourses().contains(course);
+    }
+
+    public Set<Course> getCoursesForUser(User user) {
+        return user.getCourses();
     }
 }
