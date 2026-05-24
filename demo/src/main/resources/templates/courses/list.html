@@ -1,0 +1,24 @@
+<th:block layout:fragment="content" xmlns:sec="http://www.w3.org/1999/xhtml" xmlns:layout="">
+    <h2>All Courses</h2>
+    <div class="row" th:each="course : ${courses}">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 th:text="${course.title}">Title</h5>
+                    <p th:text="${course.description}">Desc</p>
+                    <p>Enrolled: <span th:text="${course.enrolledCount} + '/' + ${course.maxStudents}"></span></p>
+                    <div sec:authorize="isAuthenticated()">
+                        <form th:if="${!myCourses.contains(course) and course.available}"
+                              th:action="@{'/courses/' + ${course.id} + '/enroll'}" method="post">
+                            <button class="btn btn-success">Enroll</button>
+                        </form>
+                        <form th:if="${myCourses.contains(course)}"
+                              th:action="@{'/courses/' + ${course.id} + '/cancel'}" method="post">
+                            <button class="btn btn-danger">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
