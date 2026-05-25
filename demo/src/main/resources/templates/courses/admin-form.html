@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="">
 <head>
     <meta charset="UTF-8">
     <title>Create Course</title>
@@ -9,20 +9,30 @@
 <div th:replace="~{fragments/header :: navbar}"></div>
 <div class="container mt-4">
     <div th:replace="~{fragments/alerts :: alerts}"></div>
-    <h2>Create New Course</h2>
-    <form th:action="@{/courses/admin/save}" th:object="${course}" method="post">
+    <h2 th:if="${courseDto.id == null}">Create New Course</h2>
+    <h2 th:if="${courseDto.id != null}">Edit Course</h2>
+
+    <form th:action="${courseDto.id == null} ? @{/courses/admin/save} : @{/courses/admin/update/{id}(id=${courseDto.id})}"
+          th:object="${courseDto}" method="post">
+
         <div class="mb-3">
             <label class="form-label">Title</label>
             <input type="text" th:field="*{title}" class="form-control" required>
+            <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="text-danger"></div>
         </div>
+
         <div class="mb-3">
             <label class="form-label">Description</label>
             <textarea th:field="*{description}" class="form-control" rows="3"></textarea>
+            <div th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-danger"></div>
         </div>
+
         <div class="mb-3">
             <label class="form-label">Max Students</label>
             <input type="number" th:field="*{maxStudents}" class="form-control" required>
+            <div th:if="${#fields.hasErrors('maxStudents')}" th:errors="*{maxStudents}" class="text-danger"></div>
         </div>
+
         <button type="submit" class="btn btn-primary">Save</button>
         <a href="/courses" class="btn btn-secondary">Cancel</a>
     </form>

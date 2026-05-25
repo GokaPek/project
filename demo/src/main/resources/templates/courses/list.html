@@ -9,45 +9,127 @@
 <div th:replace="~{fragments/header :: navbar}"></div>
 <div class="container mt-4">
     <div th:replace="~{fragments/alerts :: alerts}"></div>
-    <h2>All Courses</h2>
+
     <div class="row">
-        <div class="col-md-4 mb-3" th:each="course : ${courses}">
-            <div class="card">
+        <!-- Фильтры -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header">Filters</div>
                 <div class="card-body">
-                    <h5 class="card-title" th:text="${course.title}">Title</h5>
-                    <p class="card-text" th:text="${course.description}">Description</p>
-                    <p>Enrolled: <span th:text="${course.enrolledCount} + '/' + ${course.maxStudents}"></span></p>
-                    <div sec:authorize="isAuthenticated()">
-                        <form th:if="${myCourses != null and !myCourses.contains(course) and course.available}"
-                              th:action="@{'/courses/' + ${course.id} + '/enroll'}" method="post">
-                            <button class="btn btn-success btn-sm">Enroll</button>
-                        </form>
-                        <form th:if="${myCourses != null and myCourses.contains(course)}"
-                              th:action="@{'/courses/' + ${course.id} + '/cancel'}" method="post">
-                            <button class="btn btn-danger btn-sm">Cancel</button>
-                        </form>
-                    </div>
+                    <form method="get" action="/courses" id="filterForm">
+                        <div class="mb-3">
+                            <label class="form-label">Search by title</label>
+                            <input type="text" name="search" class="form-control"
+                                   th:value="${filter.search}" placeholder="Search...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Min students</label>
+                            <input type="number" name="minStudents" class="form-control"
+                                   th:value="${filter.minStudents}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Max students</label>
+                            <input type="number" name="maxStudents" class="form-control"
+                                   th:value="${filter.maxStudents}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sort by</label>
+                            <select name="sortBy" class="form-select">
+                                <option value="id" th:selected="${filter.sortBy == 'id'}">ID</option>
+                                <option value="title" th:selected="${filter.sortBy == 'title'}">Title</option>
+                                <option value="maxStudents" th:selected="${filter.sortBy == 'maxStudents'}">Max Students</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sort direction</label>
+                            <select name="sortDir" class="form-select">
+                                <option value="asc" th:selected="${filter.sortDir == 'asc'}">Ascending</option>
+                                <option value="desc" th:selected="${filter.sortDir == 'desc'}">Descending</option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="page" th:value="0">
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        <a href="/courses" class="btn btn-secondary w-100 mt-2">Reset</a>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Блок заметок -->
-                    <div class="mt-3">
-                        <button class="btn btn-sm btn-outline-info" type="button"
-                                th:attr="data-bs-target='#notes-' + ${course.id}"
-                                data-bs-toggle="collapse">Show Notes</button>
+        <!-- Список курсов -->
+        <div class="col-md-9">
+            <h2>All Courses</h2>
 
-                        <div th:attr="id='notes-' + ${course.id}" class="collapse mt-2">
-                            <div th:each="note : ${notesMap.get(course.id)}" class="alert alert-secondary small">
-                                <span th:text="${note.content}"></span>
-                                <br><small th:text="${#temporals.format(note.createdAt, 'dd.MM.yyyy HH:mm')}"></small>
+            <div th:if="${coursePage.totalElements == 0}" class="alert alert-info">
+                No courses found
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3" th:each="course : ${coursePage.content}">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title" th:text="${course.title}">Title</h5>
+                            <p class="card-text" th:text="${course.description}">Description</p>
+                            <p>Enrolled: <span th:text="${course.enrolledCount} + '/' + ${course.maxStudents}"></span></p>
+
+                            <!-- Admin actions -->
+                            <div sec:authorize="hasRole('ADMIN')" class="mb-2">
+                                <a th:href="@{/courses/admin/edit/{id}(id=${course.id})}"
+                                   class="btn btn-sm btn-warning">Edit</a>
+                                <form th:action="@{'/courses/admin/delete/' + ${course.id}}"
+                                      method="post" class="d-inline">
+                                    <button class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Delete this course?')">Delete</button>
+                                </form>
                             </div>
-                            <form th:action="@{'/courses/' + ${course.id} + '/add-note'}" method="post" class="mt-2">
-                                <input type="text" name="content" class="form-control form-control-sm"
-                                       placeholder="Add note..." required>
-                                <button class="btn btn-sm btn-primary mt-1">Add Note</button>
-                            </form>
+
+                            <div sec:authorize="isAuthenticated()">
+                                <form th:if="${myCourses != null and !myCourses.contains(course) and course.available}"
+                                      th:action="@{'/courses/' + ${course.id} + '/enroll'}" method="post">
+                                    <button class="btn btn-success btn-sm">Enroll</button>
+                                </form>
+                                <form th:if="${myCourses != null and myCourses.contains(course)}"
+                                      th:action="@{'/courses/' + ${course.id} + '/cancel'}" method="post">
+                                    <button class="btn btn-danger btn-sm">Cancel</button>
+                                </form>
+                            </div>
+
+                            <!-- Блок заметок -->
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-outline-info" type="button"
+                                        th:attr="data-bs-target='#notes-' + ${course.id}"
+                                        data-bs-toggle="collapse">Show Notes</button>
+                                <div th:attr="id='notes-' + ${course.id}" class="collapse mt-2">
+                                    <div th:each="note : ${notesMap.get(course.id)}" class="alert alert-secondary small">
+                                        <span th:text="${note.content}"></span>
+                                        <br><small th:text="${#temporals.format(note.createdAt, 'dd.MM.yyyy HH:mm')}"></small>
+                                    </div>
+                                    <form th:action="@{'/courses/' + ${course.id} + '/add-note'}" method="post" class="mt-2">
+                                        <input type="text" name="content" class="form-control form-control-sm"
+                                               placeholder="Add note..." required>
+                                        <button class="btn btn-sm btn-primary mt-1">Add Note</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Пагинация -->
+            <nav th:if="${coursePage.totalPages > 0}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${!coursePage.hasPrevious()} ? 'disabled'">
+                        <a class="page-link" th:href="@{/courses(search=${filter.search}, minStudents=${filter.minStudents}, maxStudents=${filter.maxStudents}, page=${filter.page - 1}, size=${filter.size}, sortBy=${filter.sortBy}, sortDir=${filter.sortDir})}">Previous</a>
+                    </li>
+                    <li th:each="i : ${#numbers.sequence(0, coursePage.totalPages - 1)}"
+                        class="page-item" th:classappend="${i == filter.page} ? 'active'">
+                        <a class="page-link" th:href="@{/courses(search=${filter.search}, minStudents=${filter.minStudents}, maxStudents=${filter.maxStudents}, page=${i}, size=${filter.size}, sortBy=${filter.sortBy}, sortDir=${filter.sortDir})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${!coursePage.hasNext()} ? 'disabled'">
+                        <a class="page-link" th:href="@{/courses(search=${filter.search}, minStudents=${filter.minStudents}, maxStudents=${filter.maxStudents}, page=${filter.page + 1}, size=${filter.size}, sortBy=${filter.sortBy}, sortDir=${filter.sortDir})}">Next</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>

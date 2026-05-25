@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.UserRegistrationDto;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,22 +29,31 @@ public class UserService implements UserDetailsService {
         return userRepository.findByUsername(username);
     }
 
-    public User register(String username, String email, String rawPassword) {
-        if (userRepository.existsByUsername(username)) {
+    public User register(UserRegistrationDto dto) {
+        if (userRepository.existsByUsername(dto.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
         User user = new User(
-                username,
-                email,
-                passwordEncoder.encode(rawPassword),
+                dto.getUsername(),
+                dto.getEmail(),
+                passwordEncoder.encode(dto.getPassword()),
                 Set.of("USER")
         );
 
         return userRepository.save(user);
+    }
+
+    // Для обратной совместимости со старым кодом
+    public User register(String username, String email, String rawPassword) {
+        UserRegistrationDto dto = new UserRegistrationDto();
+        dto.setUsername(username);
+        dto.setEmail(email);
+        dto.setPassword(rawPassword);
+        return register(dto);
     }
 
     public User findById(Long id) {
